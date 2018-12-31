@@ -18,11 +18,11 @@ if __name__ == "__main__":
     from itertools import cycle
     import os, sys
     sys.path.append(os.getcwd())
-    from cligame import Terminal
+    from ttyles import Terminal
 
     # config
     size = (40, 20)
-    TEXT = ' Hello World!   '
+    TEXT = '  Hello World!  '
 
     # calculate numbers
     TEXTTEXT = TEXT + TEXT

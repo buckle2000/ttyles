@@ -3,7 +3,7 @@
 
 # TODO delete self._fin or do something with stdin
 
-import blessings
+import blessed
 from types import MethodType
 from typing import TextIO
 from contextlib import contextmanager
@@ -14,14 +14,14 @@ class Terminal:
     def from_std(cls):
         import sys
         return cls(fin=sys.stdin, fout=sys.stdout)
-    
+
     def __init__(self, fin: TextIO, fout: TextIO):
         self._fin = fin
         self._fout = fout
-        self._bless = blessings.Terminal(stream=fout, force_styling=True)
+        self._bless = blessed.Terminal(stream=fout, force_styling=True)
         self._buffer = dict()
 
-    def print(self, s: str):        
+    def print(self, s: str):
         self._fout.write(s)
 
     @property
@@ -51,25 +51,26 @@ class Terminal:
         self.cursor = location
         self.print(c)
 
-
     @contextmanager
     def buffered(self):
+        buffer = []
+
         def buffered_print(self, s: str):
             nonlocal buffer
-            buffer += s
-        
-        buffer = ''
+            buffer.append(s)
+
         original_print = self.print
         self.print = MethodType(buffered_print, self)
-        
+
         self.print(self._bless.save)
         try:
             yield
         finally:
             self.print(self._bless.restore)
-            
-            original_print(buffer)        
+
+            original_print(''.join(buffer))
             self.print = original_print
+
     def clear(self):
         """Clear screen, scroll down"""
         self.print(self._bless.clear)
@@ -79,5 +80,5 @@ class Terminal:
         self.print('\x1bc')
 
     def __getattr__(self, name):
-        """Proxy to helpers in blessings"""
+        """Proxy to helpers in blessed.Terminal"""
         return getattr(self._bless, name)
