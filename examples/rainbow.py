@@ -1,5 +1,4 @@
 def step(tty, i):
-    tty.reset()
     for y in range(size[1]):
         for x in range(size[0]):
             digit = (x + y + i) % 16
@@ -32,8 +31,13 @@ if __name__ == "__main__":
     tty = Terminal.from_std()
     tty.size = size
 
-    # infinite loop
-    for i in cycle(range(16 * l_text)):
-        with tty.buffer():
-            step(tty, i)
-        sleep(0.1)
+    # infinite loop in full-screen mode
+    # disable input
+    with tty.fullscreen(), tty.cbreak():
+        try:
+            for i in cycle(range(16 * l_text)):
+                with tty.buffer():
+                    step(tty, i)
+                sleep(0.1)
+        except KeyboardInterrupt:
+            pass
