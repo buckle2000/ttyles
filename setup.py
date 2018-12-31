@@ -5,8 +5,8 @@ with open('Pipfile.lock') as f:
     install_requires = [k + v['version'] for k,v in json.load(f)['default'].items()]
 
 setup(
-    name='TTYles',
-    version='0.1.1',
+    name='ttyles',
+    version='0.2.0',
     author='buckle2000',
     # author_email='',
     packages=['ttyles'],

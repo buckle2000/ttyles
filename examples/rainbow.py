@@ -1,12 +1,14 @@
+from colorama import Style
+
 def step(tty, i):
     for y in range(size[1]):
         for x in range(size[0]):
-            digit = (x + y + i) % 16
-            tty[x, y] = f"{tty.color(digit)}{digit:X}"
+            digit = (x + y + i) % 8
+            tty[x, y] = f"\x1b[{30+digit}m{digit:X}" # foreground color + digit
 
     l_cycle = -i % l_text
 
-    tty.print(tty.normal)
+    tty.write(Style.RESET_ALL)
     tty[l_x, l_y - 1] = ' ' * (l_text + 2)
     tty[l_x, l_y] = ' ' + TEXTTEXT[l_cycle:l_cycle + l_text] + ' '
     tty[l_x, l_y + 1] = ' ' * (l_text + 2)

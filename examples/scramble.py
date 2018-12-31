@@ -12,7 +12,7 @@ seen = set()
 tty = Terminal.from_std()
 
 # set size of terminal
-width, height = tty.width or 80, 1
+width, height = tty.size[0] or 80, 1
 tty.size = (width, height)
 
 # row of characters
@@ -30,11 +30,11 @@ try:
         text = ''.join(row)
         with tty.buffer():
             with tty.at(0, 0):
-                tty.print(text)
+                tty.write(text)
             for match in REGEX_NUMBER.finditer(text):
                 number = match[0]
                 if number not in seen:
-                    tty.print(number + ' ')
+                    tty.write(number + ' ')
                     seen.add(number)
         sleep(0.001)
 except:

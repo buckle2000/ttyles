@@ -1,0 +1,7 @@
+RESET   = '\x1bc'
+SAVE    = '\x1b[s'
+RESTORE = '\x1b[u'
+CLEAR   = '\x1b[2J'
+RESIZE  = '\x1b[8;{rows};{cols}t'
+ENTER_FULLSCREEN = '\x1b[?1049h\x1b[22;0;0t'
+EXIT_FULLSCREEN  ='\x1b[?1049l\x1b[23;0;0t'
