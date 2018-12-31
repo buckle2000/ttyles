@@ -16,8 +16,6 @@ def step(tty, i):
 if __name__ == "__main__":
     from time import sleep
     from itertools import cycle
-    import os, sys
-    sys.path.append(os.getcwd())
     from ttyles import Terminal
 
     # config
@@ -36,6 +34,6 @@ if __name__ == "__main__":
 
     # infinite loop
     for i in cycle(range(16 * l_text)):
-        with tty.buffered():
+        with tty.buffer():
             step(tty, i)
         sleep(0.1)

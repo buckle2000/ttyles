@@ -1,18 +1,18 @@
-# TODO cached API (like vdom diff)
-#      tty.cached[x, y] = str((x + y + i) % 10)
-
 # TODO delete self._fin or do something with stdin
 
-import blessed
+import sys, blessed
 from types import MethodType
-from typing import TextIO
+from typing import TextIO, List, Tuple
 from contextlib import contextmanager
+
+Coord = Tuple[int, int]
 
 
 class Terminal:
+    """This class represents a terminal that wraps an output stream."""
+
     @classmethod
-    def from_std(cls):
-        import sys
+    def from_std(cls) -> 'Terminal':
         return cls(fin=sys.stdin, fout=sys.stdout)
 
     def __init__(self, fin: TextIO, fout: TextIO):
@@ -21,64 +21,95 @@ class Terminal:
         self._bless = blessed.Terminal(stream=fout, force_styling=True)
         self._buffer = dict()
 
-    def print(self, s: str):
-        self._fout.write(s)
+    ##############
+    # Properties #
+    ##############
 
-    @property
-    def size(self) -> (int, int) or (None, None):
+    size: Coord = property(doc="size of the terminal")
+
+    @size.getter
+    def size(self):
+        """Get current size of the terminal."""
         h, w = self._bless._height_and_width()
         return w, h
 
     @size.setter
-    def size(self, value: (int, int)):
-        """Set size of terminal with escape string"""
+    def size(self, value):
+        """Set size of the terminal"""
         self.print("\x1b[8;{rows};{cols}t".format(
             rows=value[1], cols=value[0]))
 
-    cursor: (int, int) = property()
+    cursor: Coord = property(doc="cursor position")
 
     @cursor.setter
-    def cursor(self, value: (int, int)):
-        """Set location of cursor"""
+    def cursor(self, value):
+        """Set cursor position."""
         self.print(self._bless.move(value[1], value[0]))
 
-    def at(self, *args):
-        """Move cursor to location, do something, then move cursor back"""
-        return self._bless.location(*args)
+    ###########
+    # Methods #
+    ###########
+
+    def print(self, s: str, flush=True) -> None:
+        """Print text, flush output by default."""
+        self._fout.write(s)
+        if flush:
+            self.flush()
 
     def __setitem__(self, location, c: str):
-        """Write character to buffer at certain location"""
+        """Write character to buffer at certain location."""
         self.cursor = location
         self.print(c)
 
+    def clear(self) -> None:
+        """Clear screen, then scroll down."""
+        self.print(self._bless.clear)
+
+    def reset(self) -> None:
+        """Reset terminal."""
+        self.print('\x1bc')
+        
+    def flush(self):
+        """Flush output."""
+        return self._fout.flush()
+
+    def __getattr__(self, name):
+        """Proxy function to __getattr__ of 'blessed.Terminal'."""
+        param_s = getattr(self._bless, name)
+        if len(param_s) == 0:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+        return param_s
+
+    ####################
+    # Context managers #
+    ####################
+
+    def at(self, *args):
+        """Context manager for temporarily moving the cursor."""
+        return self._bless.location(*args)
+
     @contextmanager
-    def buffered(self):
-        buffer = []
+    def buffer(self) -> List[str]:
+        """
+        Context manager for buffering output.
+        
+        Returns a list a strings, which is used internally as buffer.
+        """
+        _buffer = []
 
         def buffered_print(self, s: str):
-            nonlocal buffer
-            buffer.append(s)
+            nonlocal _buffer
+            _buffer.append(s)
 
         original_print = self.print
         self.print = MethodType(buffered_print, self)
 
         self.print(self._bless.save)
         try:
-            yield
+            yield _buffer
         finally:
             self.print(self._bless.restore)
 
-            original_print(''.join(buffer))
+            original_print(''.join(_buffer))
+            self.flush()
             self.print = original_print
-
-    def clear(self):
-        """Clear screen, scroll down"""
-        self.print(self._bless.clear)
-
-    def reset(self):
-        """Reset terminal"""
-        self.print('\x1bc')
-
-    def __getattr__(self, name):
-        """Proxy to helpers in blessed.Terminal"""
-        return getattr(self._bless, name)
