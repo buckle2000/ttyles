@@ -4,7 +4,9 @@
 # TODO delete self._fin or do something with stdin
 
 import blessings
+from types import MethodType
 from typing import TextIO
+from contextlib import contextmanager
 
 
 class Terminal:
@@ -46,16 +48,28 @@ class Terminal:
 
     def __setitem__(self, location, c: str):
         """Write character to buffer at certain location"""
-        self._buffer[location] = c
+        self.cursor = location
+        self.print(c)
 
-    def flush(self):
+
+    @contextmanager
+    def buffered(self):
+        def buffered_print(self, s: str):
+            nonlocal buffer
+            buffer += s
+        
+        buffer = ''
+        original_print = self.print
+        self.print = MethodType(buffered_print, self)
+        
         self.print(self._bless.save)
-        for location, c in self._buffer.items():
-            self.cursor = location
-            self.print(c)
-        self.print(self._bless.restore)
-        self._buffer.clear()
-
+        try:
+            yield
+        finally:
+            self.print(self._bless.restore)
+            
+            original_print(buffer)        
+            self.print = original_print
     def clear(self):
         """Clear screen, scroll down"""
         self.print(self._bless.clear)
