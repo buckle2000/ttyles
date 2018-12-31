@@ -35,7 +35,7 @@ class Terminal:
 
     @size.setter
     def size(self, value):
-        """Set size of the terminal"""
+        """Resize terminal"""
         self.print("\x1b[8;{rows};{cols}t".format(
             rows=value[1], cols=value[0]))
 
@@ -43,12 +43,15 @@ class Terminal:
 
     @cursor.setter
     def cursor(self, value):
-        """Set cursor position."""
-        self.print(self._bless.move(value[1], value[0]))
+        """Move cursor."""
+        self.move(*value)
 
     ###########
     # Methods #
     ###########
+    def move(self, x: int, y: int) -> None:
+        """Move cursor."""
+        self.print(self._bless.move(y, x))
 
     def print(self, s: str, flush=True) -> None:
         """Print text, flush output by default."""
@@ -58,7 +61,7 @@ class Terminal:
 
     def __setitem__(self, location, c: str):
         """Write character to buffer at certain location."""
-        self.cursor = location
+        self.move(*location)
         self.print(c)
 
     def clear(self) -> None:
